@@ -31,19 +31,16 @@ class Server
             IPEndPoint clientEndPoint = result.RemoteEndPoint;
             string requestMessage = Encoding.ASCII.GetString(result.Buffer);
 
-            // Update last activity time
             _activeClients[clientEndPoint] = DateTime.Now;
 
-            // Handle client request
             if (_clientRequests.TryGetValue(clientEndPoint, out int requestCount))
             {
                 if (DateTime.Now - _activeClients[clientEndPoint] > RequestLimitPeriod)
                 {
-                    _clientRequests[clientEndPoint] = 0; // Reset count if the period has passed
+                    _clientRequests[clientEndPoint] = 0; 
                 }
                 else if (requestCount >= MaxRequestsPerHour)
                 {
-                    // Limit exceeded
                     await udpServer.SendAsync(Encoding.ASCII.GetBytes("Request limit exceeded. Try again later."), clientEndPoint);
                     continue;
                 }
@@ -53,11 +50,9 @@ class Server
                 _clientRequests[clientEndPoint] = 0;
             }
 
-            // Process request
             string responseMessage = GetPrice(requestMessage);
             _clientRequests[clientEndPoint]++;
 
-            // Send response
             byte[] responseBytes = Encoding.ASCII.GetBytes(responseMessage);
             await udpServer.SendAsync(responseBytes, responseBytes.Length, clientEndPoint);
         }
